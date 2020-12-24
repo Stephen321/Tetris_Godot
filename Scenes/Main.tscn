@@ -1,12 +1,8 @@
 [gd_scene load_steps=2 format=2]
 
-[ext_resource path="res://Scenes/Shape.tscn" type="PackedScene" id=1]
+[ext_resource path="res://Materials/Grid.tscn" type="PackedScene" id=1]
 
 [node name="Main" type="Node2D"]
 
-[node name="Shape" parent="." instance=ExtResource( 1 )]
-position = Vector2( 0, -0.943878 )
-type = 0
-
-[node name="Shape2" parent="." instance=ExtResource( 1 )]
-position = Vector2( 267.116, 47.1937 )
+[node name="Grid" parent="." instance=ExtResource( 1 )]
+position = Vector2( 160, 64 )

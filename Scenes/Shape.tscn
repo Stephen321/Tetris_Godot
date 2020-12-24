@@ -3,28 +3,29 @@
 [ext_resource path="res://Scripts/Shape.gd" type="Script" id=1]
 [ext_resource path="res://Scenes/Block.tscn" type="PackedScene" id=3]
 
-[sub_resource type="StreamTexture" id=2]
+[sub_resource type="StreamTexture" id=1]
 load_path = "res://.import/block.png-d59866522ead3906f893047a26ecee2d.stex"
 
 [node name="Shape" type="Node2D"]
-modulate = Color( 0.188235, 0.780392, 0.937255, 1 )
+modulate = Color( 0.968627, 0.831373, 0.027451, 1 )
 script = ExtResource( 1 )
+type = 3
 
 [node name="Block5" type="Sprite" parent="." instance=ExtResource( 3 )]
-texture = SubResource( 2 )
+texture = SubResource( 1 )
 centered = false
 
 [node name="Block6" type="Sprite" parent="." instance=ExtResource( 3 )]
-position = Vector2( 0, 32 )
-texture = SubResource( 2 )
+position = Vector2( 32, 0 )
+texture = SubResource( 1 )
 centered = false
 
 [node name="Block7" type="Sprite" parent="." instance=ExtResource( 3 )]
-position = Vector2( 0, 64 )
-texture = SubResource( 2 )
+position = Vector2( 0, 32 )
+texture = SubResource( 1 )
 centered = false
 
 [node name="Block8" type="Sprite" parent="." instance=ExtResource( 3 )]
-position = Vector2( 0, 96 )
-texture = SubResource( 2 )
+position = Vector2( 32, 32 )
+texture = SubResource( 1 )
 centered = false

@@ -21,24 +21,22 @@ export (Type) var type = Type.I setget set_type
 
 
 # Blocks enabled. Applies in the following positions:
-# 0,1
-# 2,3
-# 4,5
-# 6,7
+# 0,1,2,3
+# 4,5,6,7
 var enabled_blocks setget set_enabled_blocks
-
 
 # Set when type is: set_type
 var _color
 
-
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	pass
+	self.type = randi() % Globals.SHAPE_COUNT
+	print(self.type)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta):
-#	pass
+func _process(delta):
+	position.y += Globals.BLOCK_SIZE * Globals.BLOCK_PER_SECOND * delta 
+
 
 func set_type(new_type):
 	type = new_type
@@ -51,52 +49,38 @@ func set_type(new_type):
 	match new_type:
 		Type.I:
 			self.enabled_blocks = [
-				true, false,
-				true, false,
-				true, false,
-				true, false,
+				false, false, false, false,
+				true, true, true, true,
 			]
 		Type.J:
 			self.enabled_blocks = [
-				false, true,
-				false, true,
-				false, true,
-				true, true,
+				true, false, false, false,
+				true, true, true, false,
 			]
 		Type.L:
 			self.enabled_blocks = [
-				true, false,
-				true, false,
-				true, false,
-				true, true,
+				false, false, true, false,
+				true, true, true, false,
 			]
 		Type.O:
 			self.enabled_blocks = [
-				true, true,
-				true, true,
-				false, false,
-				false, false,
+				true, true, false, false,
+				true, true, false, false,
 			]
 		Type.Z:
 			self.enabled_blocks = [
-				false, true,
-				true, true,
-				true, false,
-				false, false,
+				true, true, false, false,
+				false, true, true, false,
 			]
 		Type.T:
 			self.enabled_blocks = [
-				false, true,
-				true, true,
-				false, true,
-				false, false,
+				false, true, false, false,
+				true, true, true, false,
 			]
 		Type.S:
 			self.enabled_blocks = [
-				true, false,
-				true, true,
-				false, true,
-				false, false,
+				false, true, true, false,
+				true, true, false, false,
 			]
 
 
@@ -110,8 +94,8 @@ func set_enabled_blocks(new_enabled_blocks):
 		if !enabled_blocks[i]:
 			continue
 			
-		var x = (i % 2) * Globals.BLOCK_SIZE
-		var y = (i / 2) * Globals.BLOCK_SIZE
+		var x = (i % 4) * Globals.BLOCK_SIZE
+		var y = (i / 4) * Globals.BLOCK_SIZE
 		
 		var Block = preload("res://Scenes/Block.tscn")
 		var new_block = Block.instance()
