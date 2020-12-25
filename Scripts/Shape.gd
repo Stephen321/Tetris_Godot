@@ -7,6 +7,7 @@ signal stopped_moving
 
 
 enum Type { I, J, L, O, Z, T, S }
+const ENABLED_BLOCKS_SIZE = 4
 const MAX_BLOCKS = 8
 const COLORS = {
 	Type.I: Color("#30c7ef"),
@@ -33,19 +34,22 @@ var grid_ref
 var _color
 var _last_input_event_time = 1.0 / Globals.HBLOCKS_PER_SEC
 var _blocks = [] setget , get_blocks
-var _rotation_pos_offset = Vector2()
+var _rotation = 0
 
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	self.type = randi() % Globals.SHAPE_COUNT
-	position.y = Globals.BLOCK_SIZE * -2;
+	position.y = Globals.BLOCK_SIZE * -ENABLED_BLOCKS_SIZE;
 	print(self.type)
 
 func _input(event):
 	if event.is_action_pressed("ui_select"):
-		rotation_degrees += 90
-	pass
+		_rotation += 1
+		if _rotation > 3:
+			_rotation = 0
+		
+
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -64,7 +68,7 @@ func _process(delta):
 			var c = _get_col_from_block(b)
 			var r = _get_row_from_block(b)
 			var key = Vector2(c, r + 1)
-			if grid_ref && grid_ref.has(key) and grid_ref[key]:
+			if grid_ref.has(key) and grid_ref[key]:
 				collision = true
 				self.moving = false
 				break
@@ -88,8 +92,18 @@ func _process(delta):
 			
 			var can_move = true
 			for b in _blocks:
-				var b_x = new_x + b.position.x
-				if b_x < 0 or b_x + Globals.BLOCK_SIZE > Globals.BLOCK_SIZE * Globals.GRID_BLOCK_COLS:
+				var c = _get_col_from_block(b)
+				var r = _get_row_from_block(b)
+				
+				var new_c = c + dir
+				
+				if new_c < 0 or new_c > Globals.GRID_BLOCK_COLS - 1:
+					can_move = false
+					break
+				var key1 = Vector2(new_c, r)
+				var key2 = Vector2(new_c, r + 1)
+				if (grid_ref.has(key1) and grid_ref[key1] or
+					grid_ref.has(key2) and grid_ref[key2]):
 					can_move = false
 					break
 					
@@ -126,6 +140,59 @@ func _get_row_from_block(block):
 func _get_col_from_block(block):
 	return ((position.x + block.position.x) / Globals.BLOCK_SIZE)  as int
 	
+	
+func _get_base_blocks():
+	match type:
+		Type.I:
+			return [
+				false, false, false, false,
+				true, true, true, true,
+				false, false, false, false,
+				false, false, false, false,
+			]
+		Type.J:
+			return [
+				true, false, false, false,
+				true, true, true, false,
+				false, false, false, false,
+				false, false, false, false,
+			]
+		Type.L:
+			return [
+				false, false, true, false,
+				true, true, true, false,
+				false, false, false, false,
+				false, false, false, false,
+			]
+		Type.O:
+			return [
+				true, true, false, false,
+				true, true, false, false,
+				false, false, false, false,
+				false, false, false, false,
+			]
+		Type.Z:
+			return [
+				true, true, false, false,
+				false, true, true, false,
+				false, false, false, false,
+				false, false, false, false,
+			]
+		Type.T:
+			return [
+				false, true, false, false,
+				true, true, true, false,
+				false, false, false, false,
+				false, false, false, false,
+			]
+		Type.S:
+			return [
+				false, true, true, false,
+				true, true, false, false,
+				false, false, false, false,
+				false, false, false, false,
+			]
+
 func set_moving(new_moving):
 	moving = new_moving
 	if not moving:
@@ -138,44 +205,8 @@ func set_type(new_type):
 	
 	if Engine.is_editor_hint():
 		property_list_changed_notify()
-	
-	var new_enabled_blocks = []	
-	match new_type:
-		Type.I:
-			self.enabled_blocks = [
-				false, false, false, false,
-				true, true, true, true,
-			]
-		Type.J:
-			self.enabled_blocks = [
-				true, false, false, false,
-				true, true, true, false,
-			]
-		Type.L:
-			self.enabled_blocks = [
-				false, false, true, false,
-				true, true, true, false,
-			]
-		Type.O:
-			self.enabled_blocks = [
-				true, true, false, false,
-				true, true, false, false,
-			]
-		Type.Z:
-			self.enabled_blocks = [
-				true, true, false, false,
-				false, true, true, false,
-			]
-		Type.T:
-			self.enabled_blocks = [
-				false, true, false, false,
-				true, true, true, false,
-			]
-		Type.S:
-			self.enabled_blocks = [
-				false, true, true, false,
-				true, true, false, false,
-			]
+		
+	self.enabled_blocks = _get_base_blocks()
 
 
 func set_enabled_blocks(new_enabled_blocks):
@@ -190,13 +221,13 @@ func set_enabled_blocks(new_enabled_blocks):
 		if !enabled_blocks[i]:
 			continue
 			
-		var x = (i % 4) * Globals.BLOCK_SIZE
-		var y = (i / 4) * Globals.BLOCK_SIZE
+		var x = (i % ENABLED_BLOCKS_SIZE) * Globals.BLOCK_SIZE
+		var y = (i / ENABLED_BLOCKS_SIZE) * Globals.BLOCK_SIZE
 		
 		var Block = preload("res://Scenes/Block.tscn")
 		var new_block = Block.instance()
-		new_block.position.x = x;
-		new_block.position.y = y;
+		new_block.position.x = x
+		new_block.position.y = y
 		
 		add_child(new_block)
 		new_block.set_owner(self)

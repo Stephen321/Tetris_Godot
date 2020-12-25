@@ -7,26 +7,25 @@
 load_path = "res://.import/block.png-d59866522ead3906f893047a26ecee2d.stex"
 
 [node name="Shape" type="Node2D"]
-modulate = Color( 0.345098, 0.4, 0.686275, 1 )
-position = Vector2( 0, 576 )
+modulate = Color( 0.188235, 0.780392, 0.937255, 1 )
 script = ExtResource( 1 )
-type = 1
 
 [node name="Block5" type="Sprite" parent="." instance=ExtResource( 3 )]
-texture = SubResource( 1 )
-centered = false
-
-[node name="Block6" type="Sprite" parent="." instance=ExtResource( 3 )]
 position = Vector2( 0, 32 )
 texture = SubResource( 1 )
 centered = false
 
-[node name="Block7" type="Sprite" parent="." instance=ExtResource( 3 )]
+[node name="Block6" type="Sprite" parent="." instance=ExtResource( 3 )]
 position = Vector2( 32, 32 )
 texture = SubResource( 1 )
 centered = false
 
-[node name="Block8" type="Sprite" parent="." instance=ExtResource( 3 )]
+[node name="Block7" type="Sprite" parent="." instance=ExtResource( 3 )]
 position = Vector2( 64, 32 )
+texture = SubResource( 1 )
+centered = false
+
+[node name="Block8" type="Sprite" parent="." instance=ExtResource( 3 )]
+position = Vector2( 96, 32 )
 texture = SubResource( 1 )
 centered = false
