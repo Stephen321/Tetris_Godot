@@ -1,4 +1,3 @@
-tool
 extends Node2D
 
 class_name TetrisShape
@@ -7,6 +6,7 @@ signal stopped_moving
 
 
 enum Type { I, J, L, O, Z, T, S }
+const FAST_DOWN_SPEED_MULT = 8
 const ENABLED_BLOCKS_SIZE = 4
 const MAX_BLOCKS = 8
 const COLORS = {
@@ -29,12 +29,14 @@ export (Type) var type = Type.I setget set_type
 var enabled_blocks setget set_enabled_blocks
 var moving = true setget set_moving
 var grid_ref
+var being_controlled = true
 
 # Set when type is: set_type
 var _color
 var _last_input_event_time = 1.0 / Globals.HBLOCKS_PER_SEC
 var _blocks = [] setget , get_blocks
 var _rotation = 0
+var _fast_down = false
 
 
 # Called when the node enters the scene tree for the first time.
@@ -44,10 +46,16 @@ func _ready():
 	print(self.type)
 
 func _input(event):
-	if event.is_action_pressed("ui_select"):
-		_rotation += 1
-		if _rotation > 3:
-			_rotation = 0
+	if being_controlled:
+		if event.is_action_pressed("ui_select"):
+			_rotation += 1
+			if _rotation > 3:
+				_rotation = 0
+			_update_enabled_blocks()
+		if event.is_action_pressed("ui_down"):
+			_fast_down = true
+		
+		# TODO: check if going to rotate into a wall or another block
 		
 
 
@@ -56,33 +64,35 @@ func _process(delta):
 	if not moving:
 		return
 		
-	var new_y = position.y + Globals.BLOCK_SIZE * Globals.BLOCK_PER_SECOND * delta	
-	# check bottom of screen
-	if position.y > Globals.BLOCK_SIZE * (Globals.GRID_BLOCK_ROWS - 2):
-		position.y = Globals.BLOCK_SIZE * (Globals.GRID_BLOCK_ROWS - 2)
-		self.moving = false
-	else:
-		# check if any block would collide with another below
-		var collision = false
-		for b in _blocks:
-			var c = _get_col_from_block(b)
-			var r = _get_row_from_block(b)
-			var key = Vector2(c, r + 1)
-			if grid_ref.has(key) and grid_ref[key]:
-				collision = true
-				self.moving = false
-				break
+	var speed_mult = FAST_DOWN_SPEED_MULT if _fast_down else 1
+	var y_change = Globals.BLOCK_SIZE * Globals.BLOCK_PER_SECOND * delta * speed_mult	
+	
+	var collision = false
+	for b in _blocks:
+		var c = _get_col_from_block(b, y_change)
+		var r = _get_row_from_block(b)
+		var key = Vector2(c, r + 1)
+		
+		# check if it would go off the screen or if any block would collide with another below 
+		if key.y >= Globals.GRID_BLOCK_ROWS or (grid_ref.has(key) and grid_ref[key]):
+			collision = true
+			self.moving = false
+			break
 			
-		if not collision:
-			position.y = new_y
+		
+	if not collision:
+		position.y += y_change
+	else:
+		position.y = ((position.y / Globals.BLOCK_SIZE) as int) * Globals.BLOCK_SIZE
 	
 	var dir = 0
-	if Input.is_action_pressed("ui_left"):
-		dir = -1
-	elif Input.is_action_pressed("ui_right"):
-		dir = 1
+	if being_controlled:
+		if Input.is_action_pressed("ui_left"):
+			dir = -1
+		elif Input.is_action_pressed("ui_right"):
+			dir = 1
 
-	_last_input_event_time += delta
+		_last_input_event_time += delta
 
 	if dir != 0:
 		if _last_input_event_time > 1.0 / Globals.HBLOCKS_PER_SEC:
@@ -134,68 +144,192 @@ func get_block_grid_vectors():
 		grid_vectors.append(Vector2(c, r))
 	return grid_vectors
 	
-func _get_row_from_block(block):
-	return ((position.y + block.position.y) / Globals.BLOCK_SIZE)  as int
+func _get_row_from_block(block, offset = 0):
+	return ((position.y + block.position.y + offset) / Globals.BLOCK_SIZE)  as int
 
-func _get_col_from_block(block):
-	return ((position.x + block.position.x) / Globals.BLOCK_SIZE)  as int
+func _get_col_from_block(block, offset = 0):
+	return ((position.x + block.position.x + offset) / Globals.BLOCK_SIZE)  as int
 	
 	
-func _get_base_blocks():
+func _update_enabled_blocks():
+	var new_enabled_blocks = []
+
 	match type:
 		Type.I:
-			return [
-				false, false, false, false,
-				true, true, true, true,
-				false, false, false, false,
-				false, false, false, false,
-			]
+			new_enabled_blocks =  [
+					[
+						false, false, false, false,
+						true, true, true, true,
+						false, false, false, false,
+						false, false, false, false,
+					],
+					[
+						false, false, true, false,
+						false, false, true, false,
+						false, false, true, false,
+						false, false, true, false,
+					],
+					[
+						false, false, false, false,
+						true, true, true, true,
+						false, false, false, false,
+						false, false, false, false,
+					],
+					[
+						false, true, false, false,
+						false, true, false, false,
+						false, true, false, false,
+						false, true, false, false,
+					],
+				][_rotation]
 		Type.J:
-			return [
-				true, false, false, false,
-				true, true, true, false,
-				false, false, false, false,
-				false, false, false, false,
-			]
+			new_enabled_blocks =  [
+					[
+						true, false, false, false,
+						true, true, true, false,
+						false, false, false, false,
+						false, false, false, false,
+					],
+					[
+						false, true, true, false,
+						false, true, false, false,
+						false, true, false, false,
+						false, false, false, false,
+					],
+					[
+						false, false, false, false,
+						true, true, true, false,
+						false, false, true, false,
+						false, false, false, false,
+					],
+					[
+						false, true, false, false,
+						false, true, false, false,
+						true, true, false, false,
+						false, false, false, false,
+					],
+				][_rotation]
 		Type.L:
-			return [
-				false, false, true, false,
-				true, true, true, false,
-				false, false, false, false,
-				false, false, false, false,
-			]
+			new_enabled_blocks =  [
+					[
+						false, false, true, false,
+						true, true, true, false,
+						false, false, false, false,
+						false, false, false, false,
+					],
+					[
+						false, true, false, false,
+						false, true, false, false,
+						false, true, true, false,
+						false, false, false, false,
+					],
+					[
+						false, false, false, false,
+						true, true, true, false,
+						true, false, false, false,
+						false, false, false, false,
+					],
+					[
+						true, true, false, false,
+						false, true, false, false,
+						false, true, false, false,
+						false, false, false, false,
+					],
+				][_rotation]
 		Type.O:
-			return [
+			new_enabled_blocks =  [
 				true, true, false, false,
 				true, true, false, false,
 				false, false, false, false,
 				false, false, false, false,
 			]
 		Type.Z:
-			return [
-				true, true, false, false,
-				false, true, true, false,
-				false, false, false, false,
-				false, false, false, false,
-			]
+			new_enabled_blocks =  [
+					[
+						true, true, false, false,
+						false, true, true, false,
+						false, false, false, false,
+						false, false, false, false,
+					],
+					[
+						false, true, false, false,
+						true, true, false, false,
+						true, false, false, false,
+						false, false, false, false,
+					],
+					[
+						true, true, false, false,
+						false, true, true, false,
+						false, false, false, false,
+						false, false, false, false,
+					],
+					[
+						false, false, true, false,
+						false, true, true, false,
+						false, true, false, false,
+						false, false, false, false,
+					],
+				][_rotation]
 		Type.T:
-			return [
-				false, true, false, false,
-				true, true, true, false,
-				false, false, false, false,
-				false, false, false, false,
-			]
+			new_enabled_blocks =  [
+					[
+						false, true, false, false,
+						true, true, true, false,
+						false, false, false, false,
+						false, false, false, false,
+					],
+					[
+						false, true, false, false,
+						false, true, true, false,
+						false, true, false, false,
+						false, false, false, false,
+					],
+					[
+						false, false, false, false,
+						true, true, true, false,
+						false, true, false, false,
+						false, false, false, false,
+					],
+					[
+						false, true, false, false,
+						true, true, false, false,
+						false, true, false, false,
+						false, false, false, false,
+					],
+				][_rotation]
 		Type.S:
-			return [
-				false, true, true, false,
-				true, true, false, false,
-				false, false, false, false,
-				false, false, false, false,
-			]
+			new_enabled_blocks =  [
+					[
+						false, true, true, false,
+						true, true, false, false,
+						false, false, false, false,
+						false, false, false, false,
+					],
+					[
+						false, true, false, false,
+						false, true, true, false,
+						false, false, true, false,
+						false, false, false, false,
+					],
+					[
+						false, true, true, false,
+						true, true, false, false,
+						false, false, false, false,
+						false, false, false, false,
+					],
+					[
+						true, false, false, false,
+						true, true, false, false,
+						false, true, false, false,
+						false, false, false, false,
+					],
+				][_rotation]
+	self.enabled_blocks = new_enabled_blocks
 
 func set_moving(new_moving):
 	moving = new_moving
 	if not moving:
+		being_controlled = false
 		emit_signal("stopped_moving")
 		print("stopped moving")
 
@@ -205,8 +339,8 @@ func set_type(new_type):
 	
 	if Engine.is_editor_hint():
 		property_list_changed_notify()
-		
-	self.enabled_blocks = _get_base_blocks()
+
+	_update_enabled_blocks()
 
 
 func set_enabled_blocks(new_enabled_blocks):

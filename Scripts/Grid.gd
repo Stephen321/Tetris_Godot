@@ -80,5 +80,22 @@ func update_occupied_grid():
 	$DebugLab.text = map_str
 	
 	clear_complete_rows(complete_rows)
+	
+	# remove empty shapes
+	# copied from shape.clear_complete_rows
+	var shapes_to_delete = []
+	for i in range(_shapes.size()):
+		if _shapes[i].get_children().size() == 0:
+			shapes_to_delete.append(i)
+		
+	var shapes_deleted = 0
+	for s_i in shapes_to_delete:
+		var i = s_i - shapes_deleted
+		var s = _shapes[i]
+		_shapes.remove(i)
+		s.queue_free()
+		shapes_deleted += 1
+	
+	# set controlled shape
 		
 	
