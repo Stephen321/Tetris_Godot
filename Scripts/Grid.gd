@@ -1,14 +1,16 @@
 extends Sprite
 
-signal completed_rows
+signal score_changed
+signal next_type_changed
 
 var _grid = {}	
 var _shapes = []
-var _update = 0
+var _score = 0
+var _next_type
 
 func _ready():	
 	_empty_grid()
-	_spawn()
+	_spawn(true)
 	
 func _process(delta):
 	pass
@@ -26,22 +28,38 @@ func _process(delta):
 #	if _update > 1:
 #		_update = 0
 
+func _input(event):
+	if event.is_action_pressed("ui_restart"):
+		_empty_grid()
+		for s in _shapes:
+			s.queue_free()
+		_shapes.clear()
+		_spawn(true)
+		_score = 0
+		emit_signal("score_changed", 0)
 	
-	
-func _spawn():
+func _spawn(first_spawn = false):
 	print("_spawning")
 	var Shape = preload("res://Scenes/Shape.tscn")
 	var new_shape = Shape.instance()	
 	add_child(new_shape)
 	new_shape.set_owner(self)
+	
+	if first_spawn:
+		new_shape.type = randi() % Globals.SHAPE_COUNT
+	else:
+		new_shape.type = _next_type
+	_next_type = randi() % Globals.SHAPE_COUNT
+	emit_signal("next_type_changed", _next_type)
+		
 	new_shape.connect("stopped_moving", self, "_on_Shape_stopped_moving", [new_shape])
-	new_shape.grid_ref = _grid
+	new_shape.grid_ref = _grid	
+	new_shape.position.x = (randi() % (Globals.GRID_BLOCK_COLS + 1 - new_shape.get_default_col_width())) * Globals.BLOCK_SIZE 
 	
 	_shapes.append(new_shape)
-	#new_shape.position.x = Globals.BLOCK_SIZE * -2;
-	#_blocks += new_shape.get_blocks()
  
 func _empty_grid():
+	_grid.clear()
 	for r in range(Globals.GRID_BLOCK_ROWS):
 		for c in range(Globals.GRID_BLOCK_COLS):
 			_grid[Vector2(c, r)] = false
@@ -61,7 +79,6 @@ func _move_blocks_down(above, by):
 			s.move_blocks_down(above, by)
 			
 func _update_grid_occupied():	
-	_grid.clear()
 	_empty_grid()			
 	# fill in where all the blocks are
 	for s in _shapes:
@@ -85,7 +102,9 @@ func _on_Shape_stopped_moving(shape):
 	
 	# clear those blocks
 	_clear_complete_rows(complete_rows)
-	emit_signal("completed_rows", complete_rows.size())
+	if complete_rows.size() > 0:
+		_score += complete_rows.size()
+		emit_signal("score_changed", _score)
 	
 	# remove empty shapes
 	# copied from Shape._clear_complete_rows

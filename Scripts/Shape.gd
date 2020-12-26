@@ -21,6 +21,7 @@ const COLORS = {
 
 
 export (Type) var type = Type.I setget set_type
+export (bool) var enabled = true
 
 
 # Blocks enabled. Applies in the following positions:
@@ -41,11 +42,13 @@ var _fast_down = false
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	self.type = randi() % Globals.SHAPE_COUNT
+	if not enabled:
+		return
 	position.y = Globals.BLOCK_SIZE * -ENABLED_BLOCKS_SIZE;
-	print(self.type)
 
 func _input(event):
+	if not enabled:
+		return
 	if being_controlled:
 		if event.is_action_pressed("ui_up"):
 			_rotation += 1
@@ -61,6 +64,9 @@ func _input(event):
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
+	if not enabled:
+		return
+		
 	if not moving:
 		return
 		
@@ -377,4 +383,13 @@ func set_enabled_blocks(new_enabled_blocks):
 		
 func get_blocks():
 	return _blocks
+	
+func get_default_col_width():
+	match type:
+		Type.I:
+			return 4
+		Type.O:
+			return 2
+		_:
+			return 3
 

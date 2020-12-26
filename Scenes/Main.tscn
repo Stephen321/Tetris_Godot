@@ -1,8 +1,19 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://Materials/Grid.tscn" type="PackedScene" id=1]
+[ext_resource path="res://Scenes/HUD.tscn" type="PackedScene" id=2]
 
 [node name="Main" type="Node2D"]
+__meta__ = {
+"_edit_horizontal_guides_": [  ]
+}
+
+[node name="HUDContainer" type="Position2D" parent="."]
+position = Vector2( 0, 64 )
+
+[node name="HUD" parent="HUDContainer" instance=ExtResource( 2 )]
 
 [node name="Grid" parent="." instance=ExtResource( 1 )]
 position = Vector2( 160, 64 )
+[connection signal="next_type_changed" from="Grid" to="HUDContainer/HUD" method="_on_Grid_next_type_changed"]
+[connection signal="score_changed" from="Grid" to="HUDContainer/HUD" method="_on_Grid_score_changed"]

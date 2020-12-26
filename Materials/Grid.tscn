@@ -9,7 +9,7 @@ size = 12
 font_data = ExtResource( 3 )
 
 [node name="Grid" type="Sprite"]
-modulate = Color( 0.509804, 0.509804, 0.509804, 1 )
+self_modulate = Color( 0.509804, 0.509804, 0.509804, 1 )
 texture = ExtResource( 1 )
 centered = false
 script = ExtResource( 2 )
