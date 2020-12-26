@@ -1,22 +1,18 @@
 extends Sprite
 
-
-onready var spawn_timer = $Timer
+signal completed_rows
 
 var _grid = {}	
 var _shapes = []
 var _update = 0
 
 func _ready():	
-	empty_grid()
-	
-	spawn_timer.wait_time = Globals.START_SPAWN_RATE
-	spawn_timer.connect("timeout", self, "spawn")
-	spawn_timer.start()
-	spawn()
+	_empty_grid()
+	_spawn()
 	
 func _process(delta):
-	_update += delta
+	pass
+	#_update += delta
 #
 #	if _update > 1.0:
 #		_update = 0
@@ -32,57 +28,67 @@ func _process(delta):
 
 	
 	
-func spawn():
-	print("spawning")
+func _spawn():
+	print("_spawning")
 	var Shape = preload("res://Scenes/Shape.tscn")
 	var new_shape = Shape.instance()	
 	add_child(new_shape)
 	new_shape.set_owner(self)
-	new_shape.connect("stopped_moving", self, "update_occupied_grid")
+	new_shape.connect("stopped_moving", self, "_on_Shape_stopped_moving", [new_shape])
 	new_shape.grid_ref = _grid
 	
 	_shapes.append(new_shape)
 	#new_shape.position.x = Globals.BLOCK_SIZE * -2;
 	#_blocks += new_shape.get_blocks()
  
-func empty_grid():
+func _empty_grid():
 	for r in range(Globals.GRID_BLOCK_ROWS):
 		for c in range(Globals.GRID_BLOCK_COLS):
 			_grid[Vector2(c, r)] = false
 
 
-func clear_complete_rows(complete_rows):
+func _clear_complete_rows(complete_rows):
 	for s in _shapes:
 		for r in complete_rows:
 			s.clear_blocks_from_row(r)
-	
-func update_occupied_grid():
-	_grid.clear()
-	
-	empty_grid()
+			for c in range(Globals.GRID_BLOCK_COLS):
+				_grid[Vector2(c, r)] = false
+
+func _move_blocks_down(above, by):
+	for s in _shapes:
+		# only check shapes that are above the completed rows
+		if s.position.y < above * Globals.BLOCK_SIZE:
+			s.move_blocks_down(above, by)
 			
+func _update_grid_occupied():	
+	_grid.clear()
+	_empty_grid()			
+	# fill in where all the blocks are
 	for s in _shapes:
 		if s.moving:
 			continue
 		for grid_vector in s.get_block_grid_vectors():
 			_grid[grid_vector] = true
+			
+	
+func _on_Shape_stopped_moving(shape):		
+	_update_grid_occupied()
 		
+	# see if any rows have been compeleted
 	var complete_rows = []
-	var map_str = ""
 	for r in range(Globals.GRID_BLOCK_ROWS):
 		var is_row_complete = true
 		for c in range(Globals.GRID_BLOCK_COLS):
-			map_str += "X " if _grid[Vector2(c, r)] else "o "
 			is_row_complete = is_row_complete and _grid[Vector2(c, r)]
 		if is_row_complete:
 			complete_rows.append(r)
-		map_str += "\n"
-	$DebugLab.text = map_str
 	
-	clear_complete_rows(complete_rows)
+	# clear those blocks
+	_clear_complete_rows(complete_rows)
+	emit_signal("completed_rows", complete_rows.size())
 	
 	# remove empty shapes
-	# copied from shape.clear_complete_rows
+	# copied from Shape._clear_complete_rows
 	var shapes_to_delete = []
 	for i in range(_shapes.size()):
 		if _shapes[i].get_children().size() == 0:
@@ -95,7 +101,27 @@ func update_occupied_grid():
 		_shapes.remove(i)
 		s.queue_free()
 		shapes_deleted += 1
+		
+	# move blocks down 
+	if complete_rows.size() > 0:
+		_move_blocks_down(complete_rows[0], complete_rows.size())
 	
+	# update the grid
+	_update_grid_occupied()
+		
 	# set controlled shape
 		
+	# _spawn new shape
+	_spawn()
 	
+	_print_grid()
+	
+
+func _print_grid():
+	
+	var map_str = ""
+	for r in range(Globals.GRID_BLOCK_ROWS):
+		for c in range(Globals.GRID_BLOCK_COLS):
+			map_str += "X " if _grid[Vector2(c, r)] else "o "
+		map_str += "\n"
+	$DebugLab.text = map_str

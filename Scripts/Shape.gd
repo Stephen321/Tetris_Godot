@@ -47,7 +47,7 @@ func _ready():
 
 func _input(event):
 	if being_controlled:
-		if event.is_action_pressed("ui_select"):
+		if event.is_action_pressed("ui_up"):
 			_rotation += 1
 			if _rotation > 3:
 				_rotation = 0
@@ -118,8 +118,8 @@ func _process(delta):
 					break
 					
 
-			if can_move:
-				position.x = new_x
+			#if can_move:
+			position.x = new_x
 
 func clear_blocks_from_row(row):
 	var blocks_to_delete = []
@@ -136,6 +136,13 @@ func clear_blocks_from_row(row):
 		b.queue_free()
 		blocks_deleted += 1
 
+func move_blocks_down(above, by):
+	for b in _blocks:
+		var r = _get_row_from_block(b)
+		if r < above:
+			b.position.y += Globals.BLOCK_SIZE * by
+	
+	
 func get_block_grid_vectors():
 	var grid_vectors = []
 	for b in _blocks:
