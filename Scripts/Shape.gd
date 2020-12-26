@@ -118,8 +118,8 @@ func _process(delta):
 					break
 					
 
-			#if can_move:
-			position.x = new_x
+			if can_move:
+				position.x = new_x
 
 func clear_blocks_from_row(row):
 	var blocks_to_delete = []
