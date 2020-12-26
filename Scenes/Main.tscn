@@ -8,12 +8,11 @@ __meta__ = {
 "_edit_horizontal_guides_": [  ]
 }
 
-[node name="HUDContainer" type="Position2D" parent="."]
-position = Vector2( 0, 64 )
-
-[node name="HUD" parent="HUDContainer" instance=ExtResource( 2 )]
-
 [node name="Grid" parent="." instance=ExtResource( 1 )]
 position = Vector2( 160, 64 )
-[connection signal="next_type_changed" from="Grid" to="HUDContainer/HUD" method="_on_Grid_next_type_changed"]
-[connection signal="score_changed" from="Grid" to="HUDContainer/HUD" method="_on_Grid_score_changed"]
+
+[node name="HUD" parent="." instance=ExtResource( 2 )]
+[connection signal="game_over" from="Grid" to="HUD" method="_on_Grid_game_over"]
+[connection signal="game_started" from="Grid" to="HUD" method="_on_Grid_game_started"]
+[connection signal="next_type_changed" from="Grid" to="HUD" method="_on_Grid_next_type_changed"]
+[connection signal="score_changed" from="Grid" to="HUD" method="_on_Grid_score_changed"]

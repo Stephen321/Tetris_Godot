@@ -3,6 +3,7 @@ extends Node2D
 class_name TetrisShape
 
 signal stopped_moving
+signal game_over
 
 
 enum Type { I, J, L, O, Z, T, S }
@@ -28,7 +29,7 @@ export (bool) var enabled = true
 # 0,1,2,3
 # 4,5,6,7
 var enabled_blocks setget set_enabled_blocks
-var moving = true setget set_moving
+var moving = true
 var grid_ref
 var being_controlled = true
 
@@ -82,7 +83,6 @@ func _process(delta):
 		# check if it would go off the screen or if any block would collide with another below 
 		if key.y >= Globals.GRID_BLOCK_ROWS or (grid_ref.has(key) and grid_ref[key]):
 			collision = true
-			self.moving = false
 			break
 			
 		
@@ -90,6 +90,16 @@ func _process(delta):
 		position.y += y_change
 	else:
 		position.y = ((position.y / Globals.BLOCK_SIZE) as int) * Globals.BLOCK_SIZE
+		
+		var game_has_ended = false
+		for b in _blocks:
+			var r = _get_row_from_block(b)
+			if r < 0:
+				game_has_ended = true
+				emit_signal("game_over")
+				break
+			
+		set_moving(false, not game_has_ended)
 	
 	var dir = 0
 	if being_controlled:
@@ -339,12 +349,12 @@ func _update_enabled_blocks():
 				][_rotation]
 	self.enabled_blocks = new_enabled_blocks
 
-func set_moving(new_moving):
+func set_moving(new_moving, can_emit):
 	moving = new_moving
 	if not moving:
 		being_controlled = false
-		emit_signal("stopped_moving")
-		print("stopped moving")
+		if can_emit:
+			emit_signal("stopped_moving")
 
 func set_type(new_type):
 	type = new_type

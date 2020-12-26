@@ -2,6 +2,8 @@ extends Sprite
 
 signal score_changed
 signal next_type_changed
+signal game_over
+signal game_started
 
 var _grid = {}	
 var _shapes = []
@@ -9,35 +11,24 @@ var _score = 0
 var _next_type
 
 func _ready():	
-	_empty_grid()
-	_spawn(true)
-	
-func _process(delta):
 	pass
-	#_update += delta
-#
-#	if _update > 1.0:
-#		_update = 0
-#		for i in range(_blocks.size()):
-#			var b = _blocks[i]
-#			if !is_instance_valid(b):
-#				_blocks.remove(i)
-#				i-= 1
-#		print(_blocks)
-#
-#	if _update > 1:
-#		_update = 0
 
 func _input(event):
 	if event.is_action_pressed("ui_restart"):
+		_restart()
+		emit_signal("game_started")
+		
+	
+func _restart():	
 		_empty_grid()
 		for s in _shapes:
-			s.queue_free()
+			if s:
+				s.queue_free()
 		_shapes.clear()
 		_spawn(true)
 		_score = 0
 		emit_signal("score_changed", 0)
-	
+		
 func _spawn(first_spawn = false):
 	print("_spawning")
 	var Shape = preload("res://Scenes/Shape.tscn")
@@ -53,6 +44,7 @@ func _spawn(first_spawn = false):
 	emit_signal("next_type_changed", _next_type)
 		
 	new_shape.connect("stopped_moving", self, "_on_Shape_stopped_moving", [new_shape])
+	new_shape.connect("game_over", self, "_on_Shape_game_over", [new_shape])
 	new_shape.grid_ref = _grid	
 	new_shape.position.x = (randi() % (Globals.GRID_BLOCK_COLS + 1 - new_shape.get_default_col_width())) * Globals.BLOCK_SIZE 
 	
@@ -134,8 +126,11 @@ func _on_Shape_stopped_moving(shape):
 	_spawn()
 	
 	_print_grid()
-	
 
+func _on_Shape_game_over(shape):
+	shape.queue_free()
+	emit_signal("game_over")
+	
 func _print_grid():
 	
 	var map_str = ""

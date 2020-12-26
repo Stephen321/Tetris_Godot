@@ -4,23 +4,41 @@
 [ext_resource path="res://Scenes/Shape.tscn" type="PackedScene" id=2]
 [ext_resource path="res://Scripts/HUD.gd" type="Script" id=3]
 
-[node name="HUD" type="Control"]
-anchor_right = 0.25
-anchor_bottom = 0.5
+[node name="HUD" type="CanvasLayer"]
 script = ExtResource( 3 )
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchor_top = 0.395
+anchor_right = 1.0
+anchor_bottom = 0.615
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="GameMessage" type="Label" parent="MarginContainer"]
+margin_top = 56.0
+margin_right = 640.0
+margin_bottom = 112.0
+text = "Arrow keys  to control
+R to restart/begin"
+align = 1
+valign = 1
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchor_top = 0.09
 anchor_right = 1.0
 anchor_bottom = 1.0
+margin_left = 6.43237
+margin_right = -3.56763
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="Label" type="Label" parent="VBoxContainer"]
-margin_right = 160.0
+margin_right = 630.0
 margin_bottom = 25.0
 custom_fonts/font = ExtResource( 1 )
 text = "Score:"
@@ -29,9 +47,9 @@ __meta__ = {
 }
 
 [node name="ScoreLabel" type="Label" parent="VBoxContainer"]
-margin_top = 29.0
-margin_right = 160.0
-margin_bottom = 54.0
+margin_top = 33.0
+margin_right = 630.0
+margin_bottom = 58.0
 custom_fonts/font = ExtResource( 1 )
 text = "0"
 __meta__ = {
@@ -39,20 +57,20 @@ __meta__ = {
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer"]
-margin_top = 58.0
-margin_right = 160.0
-margin_bottom = 87.0
+margin_top = 66.0
+margin_right = 630.0
+margin_bottom = 99.0
 
 [node name="Label" type="Label" parent="VBoxContainer/VBoxContainer"]
-margin_right = 160.0
+margin_right = 630.0
 margin_bottom = 25.0
 custom_fonts/font = ExtResource( 1 )
 text = "Next:"
 
 [node name="CenterContainer" type="CenterContainer" parent="VBoxContainer/VBoxContainer"]
-margin_top = 29.0
-margin_right = 160.0
-margin_bottom = 29.0
+margin_top = 33.0
+margin_right = 630.0
+margin_bottom = 33.0
 use_top_left = true
 __meta__ = {
 "_edit_use_anchors_": false
