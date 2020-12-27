@@ -125,7 +125,7 @@ func _on_Shape_stopped_moving(shape):
 	# _spawn new shape
 	_spawn()
 	
-	_print_grid()
+	#_print_grid()
 
 func _on_Shape_game_over(shape):
 	shape.queue_free()
