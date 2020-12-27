@@ -96,6 +96,7 @@ func _process(delta):
 			var r = _get_row_from_block(b)
 			if r < 0:
 				game_has_ended = true
+				print("game eover")
 				emit_signal("game_over")
 				break
 			
@@ -135,6 +136,8 @@ func _process(delta):
 					
 
 			if can_move:
+				$AudioStreamPlayer.stream = preload("res://Sound/collide2.wav")
+				$AudioStreamPlayer.play()
 				position.x = new_x
 
 func clear_blocks_from_row(row):
@@ -355,6 +358,8 @@ func set_moving(new_moving, can_emit):
 		being_controlled = false
 		if can_emit:
 			emit_signal("stopped_moving")
+			$AudioStreamPlayer.stream = preload("res://Sound/collide.wav")
+			$AudioStreamPlayer.play()
 
 func set_type(new_type):
 	type = new_type
@@ -369,8 +374,8 @@ func set_type(new_type):
 func set_enabled_blocks(new_enabled_blocks):
 	enabled_blocks = new_enabled_blocks
 	
-	for child in get_children():
-		child.queue_free()
+	for b in _blocks:
+		b.queue_free()
 		
 	_blocks.clear()
 	
@@ -386,13 +391,16 @@ func set_enabled_blocks(new_enabled_blocks):
 		new_block.position.x = x
 		new_block.position.y = y
 		
-		add_child(new_block)
-		new_block.set_owner(self)
+		$Blocks.add_child(new_block)
+		new_block.set_owner($Blocks)
 		
 		_blocks.append(new_block)		
 		
 func get_blocks():
 	return _blocks
+	
+func get_block_count():
+	return _blocks.size()
 	
 func get_default_col_width():
 	match type:

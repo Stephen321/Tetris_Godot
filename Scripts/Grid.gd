@@ -102,7 +102,7 @@ func _on_Shape_stopped_moving(shape):
 	# copied from Shape._clear_complete_rows
 	var shapes_to_delete = []
 	for i in range(_shapes.size()):
-		if _shapes[i].get_children().size() == 0:
+		if _shapes[i].get_block_count() == 0:
 			shapes_to_delete.append(i)
 		
 	var shapes_deleted = 0
