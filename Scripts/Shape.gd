@@ -56,6 +56,11 @@ func _input(event):
 			if _rotation > 3:
 				_rotation = 0
 			_update_enabled_blocks()
+			
+			if _has_x_collision() or _has_y_collision():
+				_rotation -= 1
+				_update_enabled_blocks()
+					
 		if event.is_action_pressed("ui_down"):
 			while not _has_y_collision():
 				position.y += Globals.BLOCK_SIZE
@@ -102,28 +107,10 @@ func _process(delta):
 		if _last_input_event_time > 1.0 / Globals.HBLOCKS_PER_SEC:
 			_last_input_event_time = 0
 			
-			var new_x = position.x + (dir * Globals.BLOCK_SIZE)
-			
-			var can_move = true
-			for b in _blocks:
-				var c = _get_col_from_block(b)
-				var r = _get_row_from_block(b)
-				
-				var new_c = c + dir
-				
-				if new_c < 0 or new_c > Globals.GRID_BLOCK_COLS - 1:
-					can_move = false
-					break
-				var key = Vector2(new_c, r)
-				if grid_ref.has(key) and grid_ref[key]:
-					can_move = false
-					break
-					
-
-			if can_move:
+			if not _has_x_collision(dir):
 				$AudioStreamPlayer.stream = preload("res://Sound/collide2.wav")
 				$AudioStreamPlayer.play()
-				position.x = new_x
+				position.x = position.x + (dir * Globals.BLOCK_SIZE)
 
 func clear_blocks_from_row(row):
 	var blocks_to_delete = []
@@ -168,6 +155,20 @@ func _handle_y_collision():
 		
 	set_moving(false, not game_has_ended)
 
+func _has_x_collision(dir = 0):
+	for b in _blocks:
+		var c = _get_col_from_block(b)
+		var r = _get_row_from_block(b)
+		
+		var new_c = c + dir
+		
+		if new_c < 0 or new_c > Globals.GRID_BLOCK_COLS - 1:
+			return true
+		var key = Vector2(new_c, r)
+		if grid_ref.has(key) and grid_ref[key]:
+			return true
+	return false
+	
 func _has_y_collision():
 	for b in _blocks:
 		var c = _get_col_from_block(b)
