@@ -16,6 +16,7 @@ position = Vector2( 160, 64 )
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
 stream = ExtResource( 3 )
+volume_db = -5.0
 autoplay = true
 [connection signal="game_over" from="Grid" to="HUD" method="_on_Grid_game_over"]
 [connection signal="game_started" from="Grid" to="HUD" method="_on_Grid_game_started"]

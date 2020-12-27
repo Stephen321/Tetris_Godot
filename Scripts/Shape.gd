@@ -37,7 +37,6 @@ var _color
 var _last_input_event_time = 1.0 / Globals.HBLOCKS_PER_SEC
 var _blocks = [] setget , get_blocks
 var _rotation = 0
-var _fast_down = false
 var _move_down_timer = 0
 var _collision = false
 
@@ -46,7 +45,7 @@ var _collision = false
 func _ready():
 	if not enabled:
 		return
-	position.y = Globals.BLOCK_SIZE * -ENABLED_BLOCKS_SIZE;
+	position.y = Globals.BLOCK_SIZE * -2;
 
 func _input(event):
 	if not enabled:
@@ -58,8 +57,11 @@ func _input(event):
 				_rotation = 0
 			_update_enabled_blocks()
 		if event.is_action_pressed("ui_down"):
-			_fast_down = true
-		
+			while not _has_y_collision():
+				position.y += Globals.BLOCK_SIZE
+			_move_down_timer = 0
+			_collision = true
+			
 		# TODO: check if going to rotate into a wall or another block
 		
 
@@ -79,21 +81,9 @@ func _process(delta):
 		var current_collision = _has_y_collision()
 		
 		if _collision and current_collision:	
-			
-			position.y = ((position.y / Globals.BLOCK_SIZE) as int) * Globals.BLOCK_SIZE
-		
-			var game_has_ended = false
-			for b in _blocks:
-				var r = _get_row_from_block(b)
-				if r < 0:
-					game_has_ended = true
-					emit_signal("game_over")
-					break
-				
-			set_moving(false, not game_has_ended)
+			_handle_y_collision()
 			return
 			
-		
 		_collision = current_collision
 		
 		if not _collision:
@@ -165,6 +155,19 @@ func get_block_grid_vectors():
 		grid_vectors.append(Vector2(c, r))
 	return grid_vectors
 	
+func _handle_y_collision():
+	position.y = ((position.y / Globals.BLOCK_SIZE) as int) * Globals.BLOCK_SIZE
+
+	var game_has_ended = false
+	for b in _blocks:
+		var r = _get_row_from_block(b)
+		if r < 0:
+			game_has_ended = true
+			emit_signal("game_over")
+			break
+		
+	set_moving(false, not game_has_ended)
+
 func _has_y_collision():
 	for b in _blocks:
 		var c = _get_col_from_block(b)
