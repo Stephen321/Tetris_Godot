@@ -7,7 +7,6 @@ signal game_over
 
 
 enum Type { I, J, L, O, Z, T, S }
-const FAST_DOWN_SPEED_MULT = 8
 const ENABLED_BLOCKS_SIZE = 4
 const MAX_BLOCKS = 8
 const COLORS = {
@@ -39,6 +38,8 @@ var _last_input_event_time = 1.0 / Globals.HBLOCKS_PER_SEC
 var _blocks = [] setget , get_blocks
 var _rotation = 0
 var _fast_down = false
+var _move_down_timer = 0
+var _collision = false
 
 
 # Called when the node enters the scene tree for the first time.
@@ -71,36 +72,32 @@ func _process(delta):
 	if not moving:
 		return
 		
-	var speed_mult = FAST_DOWN_SPEED_MULT if _fast_down else 1
-	var y_change = Globals.BLOCK_SIZE * Globals.BLOCK_PER_SECOND * delta * speed_mult	
-	
-	var collision = false
-	for b in _blocks:
-		var c = _get_col_from_block(b, y_change)
-		var r = _get_row_from_block(b)
-		var key = Vector2(c, r + 1)
+	_move_down_timer += delta
+	if _move_down_timer > 1.0 / Globals.BLOCK_PER_SECOND:
+		_move_down_timer = 0
 		
-		# check if it would go off the screen or if any block would collide with another below 
-		if key.y >= Globals.GRID_BLOCK_ROWS or (grid_ref.has(key) and grid_ref[key]):
-			collision = true
-			break
+		var current_collision = _has_y_collision()
+		
+		if _collision and current_collision:	
+			
+			position.y = ((position.y / Globals.BLOCK_SIZE) as int) * Globals.BLOCK_SIZE
+		
+			var game_has_ended = false
+			for b in _blocks:
+				var r = _get_row_from_block(b)
+				if r < 0:
+					game_has_ended = true
+					emit_signal("game_over")
+					break
+				
+			set_moving(false, not game_has_ended)
+			return
 			
 		
-	if not collision:
-		position.y += y_change
-	else:
-		position.y = ((position.y / Globals.BLOCK_SIZE) as int) * Globals.BLOCK_SIZE
+		_collision = current_collision
 		
-		var game_has_ended = false
-		for b in _blocks:
-			var r = _get_row_from_block(b)
-			if r < 0:
-				game_has_ended = true
-				print("game eover")
-				emit_signal("game_over")
-				break
-			
-		set_moving(false, not game_has_ended)
+		if not _collision:
+			position.y += Globals.BLOCK_SIZE
 	
 	var dir = 0
 	if being_controlled:
@@ -127,10 +124,8 @@ func _process(delta):
 				if new_c < 0 or new_c > Globals.GRID_BLOCK_COLS - 1:
 					can_move = false
 					break
-				var key1 = Vector2(new_c, r)
-				var key2 = Vector2(new_c, r + 1)
-				if (grid_ref.has(key1) and grid_ref[key1] or
-					grid_ref.has(key2) and grid_ref[key2]):
+				var key = Vector2(new_c, r)
+				if grid_ref.has(key) and grid_ref[key]:
 					can_move = false
 					break
 					
@@ -169,6 +164,17 @@ func get_block_grid_vectors():
 		var r = _get_row_from_block(b)
 		grid_vectors.append(Vector2(c, r))
 	return grid_vectors
+	
+func _has_y_collision():
+	for b in _blocks:
+		var c = _get_col_from_block(b)
+		var r = _get_row_from_block(b)
+		var key = Vector2(c, r + 1)
+		
+		# check if it would go off the screen or if any block would collide with another below 
+		if key.y >= Globals.GRID_BLOCK_ROWS or (grid_ref.has(key) and grid_ref[key]):
+			return true # on next down movement we stop it moving (let's us slide)
+	return false
 	
 func _get_row_from_block(block, offset = 0):
 	return ((position.y + block.position.y + offset) / Globals.BLOCK_SIZE)  as int
@@ -358,8 +364,6 @@ func set_moving(new_moving, can_emit):
 		being_controlled = false
 		if can_emit:
 			emit_signal("stopped_moving")
-			$AudioStreamPlayer.stream = preload("res://Sound/collide.wav")
-			$AudioStreamPlayer.play()
 
 func set_type(new_type):
 	type = new_type

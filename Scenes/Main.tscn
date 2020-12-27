@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://Materials/Grid.tscn" type="PackedScene" id=1]
 [ext_resource path="res://Scenes/HUD.tscn" type="PackedScene" id=2]
+[ext_resource path="res://Sound/Tetris.wav" type="AudioStream" id=3]
 
 [node name="Main" type="Node2D"]
 __meta__ = {
@@ -12,6 +13,10 @@ __meta__ = {
 position = Vector2( 160, 64 )
 
 [node name="HUD" parent="." instance=ExtResource( 2 )]
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 3 )
+autoplay = true
 [connection signal="game_over" from="Grid" to="HUD" method="_on_Grid_game_over"]
 [connection signal="game_started" from="Grid" to="HUD" method="_on_Grid_game_started"]
 [connection signal="next_type_changed" from="Grid" to="HUD" method="_on_Grid_next_type_changed"]
